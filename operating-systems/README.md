@@ -7,21 +7,6 @@
 - ReactOS — открытая Windows NT-подобная операционная система;
 - NetBSD — UNIX-подобная операционная система с открытым исходным кодом.
 
-## Структура
-
-operating-systems/
-├── lab1/
-│   ├── reactos/
-│   └── netbsd/
-├── lab2/
-│   ├── reactos/
-│   └── netbsd/
-├── lab3/
-│   ├── reactos/
-│   └── netbsd/
-└── lab4/
-    ├── reactos/
-    └── netbsd/
 
 ## Среда выполнения
 
