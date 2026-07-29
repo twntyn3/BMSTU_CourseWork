@@ -88,9 +88,7 @@ Proof.
     length w1 + 1 + length w2 =
 
     length w3 + 1 + length w4).
-    {
-        lia.
-    }
+
     
 
 
