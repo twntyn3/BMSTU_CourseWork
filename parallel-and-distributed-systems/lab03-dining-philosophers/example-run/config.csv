@@ -1,0 +1,2 @@
+n,seconds,seed,think_min_ms,think_max_ms,eat_min_ms,eat_max_ms,take_min_ms,take_max_ms,put_min_ms,put_max_ms,stop_ns,end_ns
+5,10,42,20,80,20,60,2,8,2,5,10002222375,10002296042

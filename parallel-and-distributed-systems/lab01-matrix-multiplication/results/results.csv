@@ -1,0 +1,9 @@
+n,algorithm,threads,grid,thread_priority,process_priority,seconds,speedup,correct,priority_applied,trial
+4418,rows,1,1x1,normal,0,274.3016181,1,true,true,false
+4418,columns,1,1x1,normal,0,271.6018972,1.009939993,true,true,false
+4418,parallel,1,1x1,normal,0,283.4292448,0.9677957486,true,true,false
+4418,parallel,2,1x2,normal,0,146.5079945,1.872263825,true,true,false
+4418,parallel,4,2x2,normal,0,101.0709874,2.713950118,true,true,false
+4418,parallel,8,2x4,normal,0,83.27644667,3.293867944,true,true,false
+4418,parallel,8,2x4,low,0,99.20071754,2.765117279,true,true,false
+4418,parallel,8,2x4,high,0,80.65112433,3.401088582,true,true,false

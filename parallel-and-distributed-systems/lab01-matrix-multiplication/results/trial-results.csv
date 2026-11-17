@@ -1,0 +1,9 @@
+n,algorithm,threads,grid,thread_priority,process_priority,seconds,speedup,correct,priority_applied
+512,rows,1,1x1,normal,0,0.106763208,1,true,true
+512,columns,1,1x1,normal,0,0.087072,1.226148567,true,true
+512,parallel,1,1x1,normal,0,0.086383583,1.235920117,true,true
+512,parallel,2,1x2,normal,0,0.046756417,2.283391561,true,true
+512,parallel,4,2x2,normal,0,0.026580917,4.016535923,true,true
+512,parallel,8,2x4,normal,0,0.02189325,4.87653537,true,true
+512,parallel,8,2x4,low,0,0.030522583,3.497843154,true,true
+512,parallel,8,2x4,high,0,0.022431291,4.759565912,true,true
