@@ -1,0 +1,177 @@
+\documentclass[a4paper, 14pt]{extarticle}
+
+\usepackage{geometry}
+\geometry{a4paper,tmargin=2cm,bmargin=2cm,lmargin=3cm,rmargin=1cm}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english, main=russian]{babel}
+\usepackage{textcomp}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\graphicspath{{./images/}}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage[section]{placeins}
+\linespread{1.3}
+\sloppy
+\clubpenalty=10000
+\widowpenalty=10000
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{hyperref}
+\hypersetup{unicode=true}
+\DeclareCaptionLabelSeparator*{emdash}{~--- }
+\captionsetup[figure]{labelsep=emdash,font=onehalfspacing,position=bottom}
+\usepackage{tempora}
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=t,
+  inputencoding=utf8,
+  frame=single,
+  keepspaces=true,
+  keywordstyle=\bf,
+  numbers=left,
+  numbersep=5pt,
+  xleftmargin=25pt,
+  xrightmargin=25pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  stepnumber=1,
+  tabsize=2,
+  title=\lstname
+}
+\usepackage{amsthm,amsfonts,amsmath,amssymb,amscd}
+\usepackage{mathtools}
+\usepackage[perpage]{footmisc}
+
+\begin{document}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\newpage
+\vspace*{-60pt}
+\hspace{-65pt}
+\begin{minipage}{0.3\textwidth}
+\hspace*{-20pt}\centering
+\includegraphics[width=\textwidth]{emblem}
+\end{minipage}
+\begin{minipage}{0.67\textwidth}\small \textbf{
+\vspace*{-0.7ex}
+\hspace*{-6pt}\centerline{Министерство науки и высшего образования Российской Федерации}
+\vspace*{-0.7ex}
+\centerline{Федеральное государственное бюджетное образовательное учреждение }
+\vspace*{-0.7ex}
+\centerline{высшего образования}
+\vspace*{-0.7ex}
+\centerline{<<Московский государственный технический университет}
+\vspace*{-0.7ex}
+\centerline{имени Н.Э. Баумана}
+\vspace*{-0.7ex}
+\centerline{(национальный исследовательский университет)>>}
+\vspace*{-0.7ex}
+\centerline{(МГТУ им. Н.Э. Баумана)}}
+\end{minipage}
+
+\vspace{-25pt}
+\hspace{-35pt}\rule{\textwidth}{2.3pt}
+\vspace*{-20.3pt}
+\hspace{-35pt}\rule{\textwidth}{0.4pt}
+
+\vspace{1.5ex}
+\hspace{-35pt} \noindent \small ФАКУЛЬТЕТ\hspace{80pt} <<Информатика и системы управления>>
+
+\vspace*{-16pt}
+\hspace{47pt}\rule{0.83\textwidth}{0.4pt}
+
+\vspace{0.5ex}
+\hspace{-35pt} \noindent \small КАФЕДРА\hspace{50pt} <<Теоретическая информатика и компьютерные технологии>>
+
+\vspace*{-16pt}
+\hspace{30pt}\rule{0.866\textwidth}{0.4pt}
+
+\vspace{11em}
+
+\begin{center}
+\Large {\bf Лабораторная работа № 7} \\
+\large {\bf по курсу <<Алгоритмы компьютерной графики>>} \\
+\end{center}\normalsize
+
+\vspace{8em}
+
+\begin{flushright}
+  {Студент группы ИУ9-41Б \\
+  Хромов М.А. \\
+  \\
+  \vspace{2ex}
+  Преподаватель Цалкович П.А.}
+\end{flushright}
+
+\bigskip
+\vfill
+
+\begin{center}
+\textsl{Москва 2026}
+\end{center}
+\end{titlepage}
+
+\renewcommand{\ttdefault}{pcr}
+\newpage
+\setcounter{page}{2}
+
+\section{Задание}
+Цель работы: изучение эффективных приемов организации приложений и оптимизации вызовов \texttt{OpenGL}.
+
+В качестве основы выбрана лабораторная работа №6. Необходимо оптимизировать приложение с использованием не менее четырех различных методов, среди которых обязательно присутствуют дисплейные списки и массивы вершин. Также требуется провести измерения производительности и оформить результаты в табличном виде.
+
+\section{Теория}
+В лабораторной работе использованы следующие методы оптимизации:
+\begin{enumerate}
+  \item дисплейные списки;
+  \item массивы вершин;
+  \item индексированная отрисовка;
+  \item отсечение обратных граней и уменьшение детализации модели во время анимации.
+\end{enumerate}
+
+\section{Реализация}
+В программе предусмотрены пять режимов:
+\begin{enumerate}
+  \item baseline;
+  \item display\_lists;
+  \item display\_lists\_vertex\_arrays;
+  \item display\_lists\_vertex\_arrays\_indexed;
+  \item all\_optimizations.
+\end{enumerate}
+
+Замеры производительности выполняются автоматически и сохраняются в файл \texttt{lab7\_benchmark\_results.csv}.
+
+\section{Результаты замеров}
+После выполнения замеров таблица должна быть заполнена фактическими значениями.
+
+\begin{table}[H]
+\centering
+\caption{Результаты замеров производительности}
+\begin{tabular}{|l|c|c|c|}
+\hline
+Режим & Время, с & Средний FPS & Среднее время кадра, мс \\
+\hline
+baseline & --- & --- & --- \\
+\hline
+display\_lists & --- & --- & --- \\
+\hline
+display\_lists\_vertex\_arrays & --- & --- & --- \\
+\hline
+display\_lists\_vertex\_arrays\_indexed & --- & --- & --- \\
+\hline
+all\_optimizations & --- & --- & --- \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Заключение}
+В ходе работы было выполнено исследование способов оптимизации приложения \texttt{OpenGL}, основанного на лабораторной работе №6. Для оценки применимости выбранных методов реализован автоматический механизм замеров производительности, позволяющий сравнить различные режимы рендеринга по среднему FPS и среднему времени кадра.
+
+\end{document}

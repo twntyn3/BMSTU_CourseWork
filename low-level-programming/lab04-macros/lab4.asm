@@ -1,167 +1,152 @@
-bits 16
-org 100h
+.model  small
+.stack  100h
 
-%macro BYTE_VAR 2
-    %ifdef %{1}_TYPE
-        %error "Variable already defined"
-    %endif
-    %1: db %2
-    %define %{1}_TYPE 1
-%endmacro
 
-%macro WORD_VAR 2
-    %ifdef %{1}_TYPE
-        %error "Variable already defined"
-    %endif
-    %1: dw %2
-    %define %{1}_TYPE 2
-%endmacro
+VOL_ARG MACRO par
+    IFNB <par>
 
-; 2a: byte +1, word +2
-%macro INCREASE 1-*
+        ; запрет регистров
+        IF (.TYPE par) AND 10h
+            .ERR <VOLUME: register not allowed as argument>
+
+        ELSE
+            IFDEF par
+
+                IF (.TYPE par) AND 2
+                    mov bx, SIZE par
+                    add ax, bx
+                ELSEIF (.TYPE par) AND 4
+
+                ELSE
+                    .ERR <VOLUME: symbol must be data variable/array or constant>
+                ENDIF
+
+            ELSE
+                IF (.TYPE par) AND 4
+                ; не определённый идентификатор / неверный аргумент
+                ELSE
+                    .ERR <VOLUME: undefined symbol or invalid argument>
+                ENDIF
+
+            ENDIF
+
+        ENDIF
+
+    ENDIF
+ENDM
+
+
+; макрос VOLUME p1-p7
+
+VOLUME  MACRO p1, p2, p3, p4, p5, p6, p7
+
     pushf
-    %rep %0
-        %ifndef %{1}_TYPE
-            %error "Unknown variable"
-        %elif %{1}_TYPE = 1
-            inc byte [%1]
-        %elif %{1}_TYPE = 2
-            add word [%1], 2
-        %else
-            %error "Wrong variable type"
-        %endif
-        %rotate 1
-    %endrep
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+    push di
+    push bp
+
+    xor ax, ax  ; AX = total bytes = 0
+
+    VOL_ARG p1
+    VOL_ARG p2
+    VOL_ARG p3
+    VOL_ARG p4
+    VOL_ARG p5
+    VOL_ARG p6
+    VOL_ARG p7
+
+    call PrintWord
+
+    pop bp
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
     popf
-%endmacro
 
-; 2b: only bytes become -1
-%macro SET_MINUS_ONE 1-*
-    %rep %0
-        %ifndef %{1}_TYPE
-            %error "Unknown variable"
-        %elif %{1}_TYPE = 1
-            mov byte [%1], -1
-        %elif %{1}_TYPE != 2
-            %error "Wrong variable type"
-        %endif
-        %rotate 1
-    %endrep
-%endmacro
+ENDM
 
-; 2c: array of B (bytes) or W (words)
-%macro DEF 3-4
-    %if %3 < 1
-        %error "Array length must be positive"
-    %endif
-    %ifdef %{1}_TYPE
-        %error "Name already used"
-    %elifidni %2, B
-        %ifempty %4
-            %1: resb %3
-        %else
-            %1: times %3 db %4
-        %endif
-        %define %{1}_TYPE 1
-    %elifidni %2, W
-        %ifempty %4
-            %1: resw %3
-        %else
-            %1: times %3 dw %4
-        %endif
-        %define %{1}_TYPE 2
-    %else
-        %error "Type must be B or W"
-    %endif
-%endmacro
 
-section .data
-    BYTE_VAR A, 1
-    WORD_VAR B, 10
-    BYTE_VAR C, 2
-    WORD_VAR D, 20
-    BYTE_VAR E, 3
-    WORD_VAR F, 30
+.data
+; A, B - 64-bit variables
+A       db  8 dup (?)   ; 8 bytes
+B       dw  4 dup (?)   ; 4 words = 8 bytes
+C       db  ?
+D       dw  ?
 
-    DEF X, B, 4, 7
-    DEF Y, W, 3, -2
+Msg     db  'total volume (bytes): ', '$'
 
-    okA db '2a: OK', 13, 10, '$'
-    noA db '2a: FAIL', 13, 10, '$'
-    okB db '2b: OK', 13, 10, '$'
-    noB db '2b: FAIL', 13, 10, '$'
-    okC db '2c: OK', 13, 10, '$'
-    noC db '2c: FAIL', 13, 10, '$'
 
-section .bss
-    DEF Z, B, 4
-Z_end:
+.code
 
-section .text
-start:
-    push cs
-    pop ds
+PrintWord PROC NEAR
+    push bx
+    push cx
+    push dx
 
-    INCREASE A, B, C, D, E, F
+    cmp ax, 0
+    jne pw_not_zero
 
-    mov dx, okA
-    cmp byte [A], 2
-    jne .failA
-    cmp word [B], 12
-    jne .failA
-    cmp byte [C], 3
-    jne .failA
-    cmp word [D], 22
-    jne .failA
-    cmp byte [E], 4
-    jne .failA
-    cmp word [F], 32
-    je .showA
-.failA:
-    mov dx, noA
-.showA:
-    mov ah, 09h
+    mov dl, '0'
+    mov ah, 2
+    int 21h
+    jmp pw_newline
+
+pw_not_zero:
+    mov bx, 10
+    xor cx, cx
+
+pw_div_loop:
+    xor dx, dx
+    div bx
+    push dx
+    inc  cx
+    cmp ax, 0
+    jne pw_div_loop
+
+pw_print_loop:
+    pop dx
+    add dl, '0'
+    mov ah, 2
+    int 21h
+    loop pw_print_loop
+
+pw_newline:
+    mov dl, 13
+    mov ah, 2
+    int 21h
+    mov dl, 10
+    mov ah, 2
     int 21h
 
-    SET_MINUS_ONE A, B, C, D, E, F
+    pop dx
+    pop cx
+    pop bx
+    ret
+PrintWord ENDP
 
-    mov dx, okB
-    cmp byte [A], -1
-    jne .failB
-    cmp word [B], 12
-    jne .failB
-    cmp byte [C], -1
-    jne .failB
-    cmp word [D], 22
-    jne .failB
-    cmp byte [E], -1
-    jne .failB
-    cmp word [F], 32
-    je .showB
-.failB:
-    mov dx, noB
-.showB:
-    mov ah, 09h
+main PROC
+    mov ax, @data
+    mov ds, ax
+
+    mov dx, OFFSET Msg
+    mov ah, 9
     int 21h
 
-    mov dx, okC
-    cmp byte [X], 7
-    jne .failC
-    cmp byte [X+3], 7
-    jne .failC
-    cmp word [Y], -2
-    jne .failC
-    cmp word [Y+4], -2
-    jne .failC
-    mov ax, Z_end - Z
-    cmp ax, 4
-    je .showC
-.failC:
-    mov dx, noC
-.showC:
-    mov ah, 09h
-    int 21h
+    ; A = 8 by, B = 8 by, C = 1 by, D = 2 by
+    ; total = 8 + 8 + 1 + 2 = 19 bytes
+    VOLUME A, B, C, D
 
     mov ax, 4C00h
     int 21h
+main ENDP
+
+END main
+
 

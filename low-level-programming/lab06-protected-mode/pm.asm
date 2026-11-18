@@ -1,4 +1,3 @@
-; LAB6_PM_N18_FINAL_v2.ASM  (TASM 2.02)
         .386p
 
 GROUP_NO        EQU     18
@@ -12,7 +11,7 @@ HI_DATA_PHYS    EQU     00130000h
 HI_STACK_TOP    EQU     0019F000h
 
 VIDEO_PHYS      EQU     000B8000h
-VIDEO_VIRT      EQU     (GROUP_NO*1000h)       ; 12000h for N=18
+VIDEO_VIRT      EQU     (GROUP_NO*1000h)
 
 CODE_SEL        EQU     0008h
 DATA_SEL        EQU     0010h
@@ -55,28 +54,13 @@ RM_CODE segment para public 'CODE' use16
 ENTRY_OFF dd     0
         dw      CODE_SEL
 
-; ---------------- GDT (copied to HI_GDT_PHYS before paging) ----------------
 GDT:
 NULL_descr      db  8 dup(0)
-
-; CODE base=0, limit=FFFFF, G=1, DB=1  (effective limit FFFFFFFF)
 CODE_descr      db  0FFh,0FFh,00h,00h,00h,10011010b,11001111b,00h
-
-; DATA base=0, limit=FFFFF, G=1, DB=1  (effective limit FFFFFFFF)
 DATA_descr      db  0FFh,0FFh,00h,00h,00h,10010010b,11001111b,00h
-
-; VIDEO data: base=B8000h, limit=0FFFh, G=0, DB=1
 VIDEO_descr     db  0FFh,0Fh,00h,80h,0Bh,10010010b,01000000b,00h
-
-; INVALID #1: system reserved type (type=0), base_mid = GROUP_NO (18)
-; access: P=1 DPL=0 S=0 type=0  => 80h
 INV_SYS_descr   db  0FFh,0FFh,00h,00h,GROUP_NO,10000000b,00000000b,00h
-
-; INVALID #2: reserved bit in 2nd dword (L=1), limit contains GROUP_NO (0012h)
-; limit=0012h, base=0, access=9Ah (code), flags: L=1, others 0
 INV_L_descr     db  (GROUP_NO AND 0FFh),((GROUP_NO SHR 8) AND 0FFh),00h,00h,00h,10011010b,00100000b,00h
-
-; SYSTEM descriptor (valid): 32-bit available TSS type=9, P=1 => 89h
 SYS_TSS_descr   db  00h,00h,00h,00h,00h,10001001b,00000000b,00h
 
 GDT_size        equ $-GDT
@@ -92,7 +76,6 @@ RM_STACK ends
 PM_CODE segment para public 'CODE' use32
         assume cs:PM_CODE, ds:PM_DATA, ss:PM_DATA
 
-; ---------------- Stage 1: relocate GDT + data + stage2 code, then enable paging ----------------
 PM_STAGE1_ENTRY:
         mov     ax,DATA_SEL
         mov     ds,ax
@@ -101,7 +84,6 @@ PM_STAGE1_ENTRY:
         mov     esp,0009F000h
         cld
 
-        ; Copy current GDT (from GDTR) to HI_GDT_PHYS
         sub     esp,8
         sgdt    fword ptr [esp]
         movzx   ecx,word ptr [esp]
@@ -117,7 +99,6 @@ PM_STAGE1_ENTRY:
         and     ecx,3
         rep     movsb
 
-        ; Copy PM_DATA to HI_DATA_PHYS
         xor     eax,eax
         mov     ax,PM_DATA
         shl     eax,4
@@ -126,7 +107,6 @@ PM_STAGE1_ENTRY:
         mov     ecx,(PM_DATA_SIZE+3)/4
         rep     movsd
 
-        ; Copy stage2 code to HI_CODE_PHYS
         xor     eax,eax
         mov     ax,PM_CODE
         shl     eax,4
@@ -136,7 +116,6 @@ PM_STAGE1_ENTRY:
         mov     ecx,(PM_STAGE2_SIZE+3)/4
         rep     movsd
 
-        ; Build paging: PDE[0] -> PT0, identity map first 4MB, patch page N*1000h -> B8000h
         mov     edi,PAGE_DIR_PHYS
         mov     eax,(PAGE_TBL0_PHYS or 00000007h)
         stosd
@@ -167,12 +146,10 @@ PM_STAGE1_ENTRY:
         mov     cr0,eax
         jmp     short $+2
 
-        ; Jump to relocated stage2
         db      0EAh
         dd      (HI_CODE_PHYS + (PM_STAGE2_ENTRY - PM_STAGE2_START))
         dw      CODE_SEL
 
-; ---------------- Stage 2 (runs from HI_CODE_PHYS) ----------------
 PM_STAGE2_START label byte
 
 PM_STAGE2_ENTRY:
@@ -185,7 +162,6 @@ PM_STAGE2_ENTRY:
 
         mov     ebp,HI_DATA_PHYS
 
-        ; Force GDTR -> relocated GDT
         sub     esp,8
         mov     word ptr [esp],(GDT_size-1)
         mov     dword ptr [esp+2],HI_GDT_PHYS
@@ -233,7 +209,6 @@ PM_STAGE2_ENTRY:
 @@hang:
         jmp     @@hang
 
-; ---------------- Screen helpers (write to VIDEO_VIRT) ----------------
 ClearScreen proc near
         push    eax
         push    ecx
@@ -336,7 +311,6 @@ PrintHex32 proc near
         ret
 PrintHex32 endp
 
-; prints EDX:EAX as 16 hex digits
 PrintHex64 proc near
         push    eax
         push    edx
@@ -389,8 +363,6 @@ PrintBitFromZF proc near
         ret
 PrintBitFromZF endp
 
-; ---------------- Descriptor decode ----------------
-; IN: ESI = descriptor pointer, index is on stack from caller loop (EAX before call)
 ShowDescriptor proc near
         push    eax
         push    ebx
@@ -399,8 +371,8 @@ ShowDescriptor proc near
         push    esi
 
         mov     ebx,esi
-        mov     dl,byte ptr [ebx+5]         ; access
-        mov     dh,byte ptr [ebx+6]         ; flags/limhi
+        mov     dl,byte ptr [ebx+5]
+        mov     dh,byte ptr [ebx+6]
 
         lea     esi,[ebp + offset S_GDT1]
         call    PrintStrZ
@@ -411,7 +383,6 @@ ShowDescriptor proc near
         lea     esi,[ebp + offset S_BASE]
         call    PrintStrZ
 
-        ; base
         movzx   eax,word ptr [ebx+2]
         movzx   ecx,byte ptr [ebx+4]
         shl     ecx,16
@@ -421,50 +392,63 @@ ShowDescriptor proc near
         or      eax,ecx
         call    PrintHex32
 
-        ; raw 20-bit limit in EAX
+        ; -------- LIM (effective) --------
         movzx   eax,word ptr [ebx]
         movzx   ecx,byte ptr [ebx+6]
         and     ecx,0Fh
         shl     ecx,16
-        or      eax,ecx
+        or      eax,ecx              ; EAX = limit_field (20-bit)
 
-        ; effective limit
         lea     esi,[ebp + offset S_LIM]
         call    PrintStrZ
 
-        test    byte ptr [ebx+6],80h
+        test    byte ptr [ebx+6],80h ; G?
         jz      @@lim_byte
         shl     eax,12
         or      eax,0FFFh
 @@lim_byte:
         call    PrintHex32
 
-        ; size = effective_limit + (G?1000h:1)
-        push    edx                         ; save access/flags in DL/DH
+        ; -------- SIZE (fixed) --------
+        ; SIZE = effective_limit + 1
+        ; for G=1: SIZE = (limit_field + 1) << 12
+        ; for G=0: SIZE = limit_field + 1
+
+        push    edx
         lea     esi,[ebp + offset S_SIZE]
         call    PrintStrZ
 
+        ; rebuild raw limit_field into EAX (20-bit)
+        movzx   eax,word ptr [ebx]
+        movzx   ecx,byte ptr [ebx+6]
+        and     ecx,0Fh
+        shl     ecx,16
+        or      eax,ecx              ; EAX = limit_field
+
+        test    byte ptr [ebx+6],80h ; G?
+        jz      @@size_byte
+
+        inc     eax                  ; limit_field + 1
         xor     edx,edx
-        test    byte ptr [ebx+6],80h
-        jz      @@add1
-        add     eax,1000h
-        adc     edx,0
+        shld    edx,eax,12
+        shl     eax,12
         lea     esi,[ebp + offset S_ADD1000]
         jmp     @@size_print
-@@add1:
-        add     eax,1
-        adc     edx,0
+
+@@size_byte:
+        inc     eax
+        xor     edx,edx
         lea     esi,[ebp + offset S_ADD1]
+
 @@size_print:
         push    esi
         call    PrintHex64
         pop     esi
         call    PrintStrZ
-        pop     edx                         ; restore DL/DH
+        pop     edx
 
         call    NewLine
 
-        ; NULL?
         cmp     dword ptr [esp+16],0
         jne     @@not_null
         lea     esi,[ebp + offset S_NULL]
@@ -473,7 +457,6 @@ ShowDescriptor proc near
         jmp     @@done_block
 
 @@not_null:
-        ; INVALID #2: reserved bit in 2nd dword (L=1) => flags bit 5
         test    dh,20h
         jz      @@chk_sys
         lea     esi,[ebp + offset S_INV_L]
@@ -482,9 +465,8 @@ ShowDescriptor proc near
         jmp     @@done_block
 
 @@chk_sys:
-        ; INVALID #1: system reserved types (S=0 and type in {0,8,Ah,Dh})
         test    dl,10h
-        jnz     @@valid_access               ; S=1 -> code/data
+        jnz     @@valid_access
         mov     al,dl
         and     al,0Fh
         cmp     al,00h

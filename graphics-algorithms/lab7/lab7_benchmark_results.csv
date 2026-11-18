@@ -1,0 +1,6 @@
+preset,elapsed_s,frames,avg_fps,avg_frame_ms
+baseline,5.001,602,120.38,8.307
+display_lists,5.006,597,119.27,8.385
+display_lists_vertex_arrays,5.01,600,119.76,8.35
+display_lists_vertex_arrays_indexed,5.0,598,119.6,8.361
+all_optimizations,5.004,601,120.09,8.327
